@@ -1,92 +1,210 @@
-//import 'package:flutter/material.dart';
-//import 'package:flutter_study/AppState/APIS.dart';
-//import 'package:flutter_study/AppState/Settings.dart';
-//import 'package:flutter_study/AppState/fetchSetting.dart';
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/cupertino.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_study/AppState/APIS.dart';
+import 'package:flutter_study/pov/APIDATA.dart';
+import 'package:image_picker/image_picker.dart';
+
+void main() {
+  runApp(new MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return new MaterialApp(
+//      theme: new ThemeData.dark(),
+      home: new MyHomePage(),
+    );
+  }
+}
+
+class MyHomePage extends StatefulWidget {
+  @override
+  State createState() => new MyHomePageState();
+}
+
+class MyHomePageState extends State<MyHomePage> {
+  APIS api;
+
+  @override
+  void initState() {
+    super.initState();
+    api = new APIS();
+  }
+
+  File imageFile;
+
+  Future<void> _showChooseDialog(BuildContext context) async {
+    return showDialog<void>(
+      context: context,
+      barrierDismissible: true, // user must tap button!
+      builder: (BuildContext context) {
+        return CupertinoAlertDialog(
+          title: Text('Make a choice!'),
+          actions: <Widget>[
+            CupertinoDialogAction(
+              child: Text('Gallery'),
+              onPressed: () {
+                _openImageSource(context, ImageSource.gallery);
+                Navigator.pop(context);
+              },
+            ),
+            CupertinoDialogAction(
+              child: Text('Camera'),
+              onPressed: () {
+                _openImageSource(context, ImageSource.camera);
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  _openImageSource(BuildContext context, ImageSource imageSource) async {
+    var picture =
+    await ImagePicker.pickImage(source: imageSource, imageQuality: 50);
+    saveImage(picture);
+  }
+
+  saveImage(var picture) {
+    setState(() {
+      imageFile = picture;
+
+      convertImageToBase64(imageFile);
+    });
+  }
+
+  convertImageToBase64(File image) {
+    String img64 = base64Encode(image.readAsBytesSync());
+
+    callAPIS(img64);
+  }
+
+  String text = '';
+  List<String> dataList = [];
+
+  callAPIS(String image) {
+    // TODO : CALL OCR API
+    api.fetchSetting(image).then((response) {
+      if (response.statusCode == 200) {
+        List data = [];
+
+        json
+            .decode(response.body)['predictions']
+            .forEach((k, v) => data.add('${k}: ${v}'));
+
+        for (int i = 0; i < data.length; i++) {
+          text = text + data[i] + (i != data.length - 1 ? " - " : "");
+        }
+
+
+        // TODO : CALL TRANSLATE A PI
+        api.translate(text).then((response) {
+          print("---------------------------------------------");
+          setState(() {
+            dataList = json
+                .decode(response.body)['data']['translations'][0]
+            ['translatedText']
+                .toString()
+                .split("-");
+          });
+          print(dataList);
+          print("---------------------------------------------");
+        });
+      } else {
+        print(response.body);
+        print(response.statusCode);
+        throw Exception('Failed to load data');
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return new Scaffold(
+      appBar: new AppBar(
+        title: new Text('Upload Image for analysis'),
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.start,
+          children: <Widget>[
+            SizedBox(
+              height: 20,
+            ),
+            Center(
+              child: Stack(
+                children: <Widget>[
+                  Container(
+                    width: 180,
+                    height: 180,
+                    decoration: BoxDecoration(
+                        borderRadius: BorderRadius.all(Radius.circular(100)),
+                        color: Colors.grey[200]),
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.all(Radius.circular(100)),
+                      child: imageFile != null
+                          ? Image.file(imageFile, fit: BoxFit.cover)
+                          : Container(),
+                    ),
+                  ),
+                  Container(
+                      width: 180,
+                      height: 180,
+                      decoration: BoxDecoration(
+                          borderRadius: BorderRadius.all(Radius.circular(100)),
+                          color: Colors.transparent),
+                      child: IconButton(
+                          icon: Icon(Icons.camera_enhance),
+                          onPressed: () => _showChooseDialog(context))),
+                ],
+              ),
+            ),
+            SizedBox(height: 20),
+            dataList.length != 0
+                ? ListView.builder(
+                shrinkWrap: true,
+                itemCount: dataList.length,
+                itemBuilder: (context, index) => Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    Text(
+                      dataList[index],
+                      textAlign: TextAlign.center,
+                    )
+                  ],
+                ))
+                : Text("please upload image")
+          ],
+        ),
+      ),
+//      body: Center(
+//        child: FutureBuilder<APiData>(
+//          future: api.fetchSetting(),
+//          builder: (context, snapshot) {
+//            if (snapshot.hasData) {
+//              Text(snapshot.data.prediction.Melanoma);
+//              Text(snapshot.data.prediction.VascularLesions);
+//              Text(snapshot.data.prediction.MelanocyticNevi);
+//              Text(snapshot.data.prediction.dermatofibroma);
+//              Text(snapshot.data.prediction.actinicKeratoses);
+//              Text(snapshot.data.prediction.BenignKeratosis);
+//            } else if (snapshot.hasError) {
+//              return Text("${snapshot.error}");
+//            }
 //
-//void main() => runApp(MyApp());
-//
-//class MyApp extends StatelessWidget {
-//  // This widget is the root of your application.
-//  @override
-//  Widget build(BuildContext context) {
-//    return MaterialApp(
-//      title: 'Flutter Demo',
-//      theme: ThemeData(
-//        // This is the theme of your application.
-//        //
-//        // Try running your application with "flutter run". You'll see the
-//        // application has a blue toolbar. Then, without quitting the app, try
-//        // changing the primarySwatch below to Colors.green and then invoke
-//        // "hot reload" (press "r" in the console where you ran "flutter run",
-//        // or simply save your changes to "hot reload" in a Flutter IDE).
-//        // Notice that the counter didn't reset back to zero; the application
-//        // is not restarted.
-//        primarySwatch: Colors.blue,
-//      ),
-//      home: MyHomePage(title: 'Flutter Demo Home Page'),
-//    );
-//  }
-//}
-//
-//class MyHomePage extends StatefulWidget {
-//  MyHomePage({Key key, this.title}) : super(key: key);
-//
-//  // This widget is the home page of your application. It is stateful, meaning
-//  // that it has a State object (defined below) that contains fields that affect
-//  // how it looks.
-//
-//  // This class is the configuration for the state. It holds the values (in this
-//  // case the title) provided by the parent (in this case the App widget) and
-//  // used by the build method of the State. Fields in a Widget subclass are
-//  // always marked "final".
-//
-//  final String title;
-//
-//  @override
-//  _MyHomePageState createState() => _MyHomePageState();
-//}
-//
-//class _MyHomePageState extends State<MyHomePage> {
-//  int _counter = 0;
-//  APIS api = new APIS();
-//
-//  void _incrementCounter() {
-//    setState(() {
-//      // This call to setState tells the Flutter framework that something has
-//      // changed in this State, which causes it to rerun the build method below
-//      // so that the display can reflect the updated values. If we changed
-//      // _counter without calling setState(), then the build method would not be
-//      // called again, and so nothing would appear to happen.
-//      _counter++;
-//    });
-//  }
-//
-//  @override
-//  Widget build(BuildContext context) {
-//    return Scaffold(
-//        appBar: AppBar(
-//          // Here we take the value from the MyHomePage object that was created by
-//          // the App.build method, and use it to set our appbar title.
-//          title: Text(widget.title),
+//            // By default, show a loading spinner.
+//            return CircularProgressIndicator();
+//          },
 //        ),
-//        body: Center(
-//          child: FutureBuilder<AllData>(
-//            future: api.fetchSetting(),
-//            builder: (context, snapshot) {
-//              if (snapshot.hasData) {
-//                return ListView.builder(
-//                  itemCount: snapshot.data.cities.length,
-//                    itemBuilder: (context, index) => Text(snapshot.data.cities[index].name)
-//                );
-//              } else if (snapshot.hasError) {
-//                return Text("${snapshot.error}");
-//              }
-//
-//              // By default, show a loading spinner.
-//              return CircularProgressIndicator();
-//            },
-//          ),
-//          // This trailing comma makes auto-formatting nicer for build methods.
-//        ));
-//  }
-//}
+//      )
+    );
+  }
+}
