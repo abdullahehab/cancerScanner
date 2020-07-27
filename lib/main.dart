@@ -4,7 +4,6 @@ import 'dart:io';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_study/APIS.dart';
-import 'package:flutter_study/pov/APIDATA.dart';
 import 'package:image_picker/image_picker.dart';
 
 void main() {
