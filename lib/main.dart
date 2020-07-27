@@ -3,7 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_study/AppState/APIS.dart';
+import 'package:flutter_study/APIS.dart';
 import 'package:flutter_study/pov/APIDATA.dart';
 import 'package:image_picker/image_picker.dart';
 
@@ -185,26 +185,6 @@ class MyHomePageState extends State<MyHomePage> {
           ],
         ),
       ),
-//      body: Center(
-//        child: FutureBuilder<APiData>(
-//          future: api.fetchSetting(),
-//          builder: (context, snapshot) {
-//            if (snapshot.hasData) {
-//              Text(snapshot.data.prediction.Melanoma);
-//              Text(snapshot.data.prediction.VascularLesions);
-//              Text(snapshot.data.prediction.MelanocyticNevi);
-//              Text(snapshot.data.prediction.dermatofibroma);
-//              Text(snapshot.data.prediction.actinicKeratoses);
-//              Text(snapshot.data.prediction.BenignKeratosis);
-//            } else if (snapshot.hasError) {
-//              return Text("${snapshot.error}");
-//            }
-//
-//            // By default, show a loading spinner.
-//            return CircularProgressIndicator();
-//          },
-//        ),
-//      )
     );
   }
 }
